@@ -1,16 +1,19 @@
 const router = require("express").Router();
-const { NOT_FOUND } = require("../utils/errors");
+const clothingItemRoutes = require("./clothingItem");
+const userRoutes = require("./users");
+const { createUser, userLogin } = require("../controllers/users");
+const { ERROR_404_NOT_FOUND } = require("../utils/errors");
 
-const clothingItem = require("./clothingItem");
-const user = require("./users");
+router.use("/items", clothingItemRoutes);
+router.use("/users", userRoutes);
 
-router.use("/items", clothingItem);
-router.use("/users", user);
+router.post("/signup/", createUser);
+router.post("/signin/", userLogin);
 
 router.use((req, res) => {
   console.log(res);
-  res.status(NOT_FOUND).send({
-    message: "Requested resource not found.",
+  res.status(ERROR_404_NOT_FOUND).send({
+    message: "The request was sent to a non-existent address",
   });
 });
 

@@ -1,57 +1,106 @@
+const jwt = require("jsonwebtoken");
+const bcrypt = require("bcrypt");
 const User = require("../models/user");
-const { BAD_REQUEST, DEFAULT_ERROR, NOT_FOUND } = require("../utils/errors");
+const {
+  handleErrors,
+  ERROR_400_BAD_REQUEST,
+  ERROR_401_UNAUTHORIZED,
+  ERROR_403_FORBIDDEN,
+  ERROR_404_NOT_FOUND,
+  ERROR_409_DUPLICATE,
+  ERROR_500_DEFAULT_ERROR,
+} = require("../utils/errors");
 
-const getUsers = (req, res) => {
-  User
-    .find({})
-    .then((items) => res.status(200).send(items))
-    .catch(() => {
-      res
-        .status(DEFAULT_ERROR)
-        .send({ message: "Error has occurred on the server. [U001]" });
-    });
-};
-
-const getUser = (req, res) => {
-  const { userId } = req.params;
-  User
-    .findById(userId)
-    .orFail()
-    .then((user) => res.send(user))
-    .catch((err) => {
-      console.error(err);
-      if (err.name === "DocumentNotFoundError") {
-        res.status(NOT_FOUND).send({message: "Id not found, or the request was sent to a non-existent address",});
-      } else if (err.name === "CastError") {
-        res.status(BAD_REQUEST).send({
-          message: "Invalid user Id.",
-        });
-      } else {
-        res
-          .status(DEFAULT_ERROR)
-          .send({ message: "Error has occurred on the server.  [U002]" });
-      }
-    });
-};
+const { JWT_SECRET } = require("../utils/config");
 
 const createUser = (req, res) => {
-  const { name, avatar } = req.body;
-  User
-    .create({ name, avatar })
-    .then((item) => {
-      res.status(201).send({ data: item });
+  const { name, avatar, email, password } = req.body;
+
+  if (!email || !password) {
+    return res.status(ERROR_400_BAD_REQUEST).send({ message: "No user found" });
+  }
+  return User.findOne({ email }).then((userFound) => {
+    if (userFound) {
+      return res
+        .status(ERROR_409_DUPLICATE)
+        .send({ message: "That email already exists" });
+    }
+
+    return bcrypt
+      .hash(password, 10)
+      .then((hash) => {
+        User.create({ name, avatar, email, password: hash })
+          .then((user) =>
+            res.send({
+              name,
+              avatar,
+              email,
+              _id: user._id,
+            }),
+          )
+          .catch((err) => {
+            console.error(err);
+            handleErrors(req, res, err);
+          });
+      })
+      .catch((err) => {
+        console.error(err);
+        handleErrors(req, res, err);
+      });
+  });
+};
+
+const userLogin = (req, res) => {
+  const { email, password } = req.body;
+
+  User.findUserByCredentials(email, password)
+    .then((user) => {
+      const token = jwt.sign({ _id: user._id }, JWT_SECRET, {
+        expiresIn: "7d",
+      });
+      res.status(200).send({ token });
     })
     .catch((err) => {
       console.error(err);
-      if (err.name === "ValidationError") {
-        res.status(BAD_REQUEST).send({
-          message: "invalid data",
-        });
-      } else {
-        res
-          .status(DEFAULT_ERROR)
-          .send({ message: "Error has occurred on the server.  [U003]" });
-      }
+      res.status(ERROR_400_BAD_REQUEST).send({ message: "Incorrect email or password" });
     });
 };
-module.exports = { getUser, getUsers, createUser };
+
+
+const getCurrentUser = (req, res) => {
+  User.findById(req.user._id)
+    .orFail()
+    .then((user) => {
+      res.send({ data: user });
+    })
+    .catch((err) => {
+      console.error(err);
+      handleErrors(req, res, err);
+    });
+};
+
+const updateUser = (req, res) => {
+  const { name, avatar } = req.body;
+
+  const userId = req.user._id;
+
+  User.findByIdAndUpdate(
+    userId,
+    { name, avatar },
+    { new: true, runValidators: true },
+  )
+    .then((user) => {
+      res.send({ data: user });
+    })
+    .catch((err) => {
+      console.error(err);
+      handleErrors(req, res, err);
+    });
+};
+
+module.exports = {
+  createUser,
+  userLogin,
+  getCurrentUser,
+  updateUser,
+};

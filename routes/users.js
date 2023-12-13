@@ -1,9 +1,13 @@
 const router = require("express").Router();
-const { getUser, getUsers, createUser } = require("../controllers/users");
+const { getCurrentUser, updateUser } = require("../controllers/users");
+const auth = require("../middlewares/auth");
 
-
-router.get("/", getUsers);
-router.get("/:userId", getUser);
-router.post("/", createUser);
+router.get("/me", auth, getCurrentUser);
+router.patch("/me", auth, updateUser);
+// Sprint 12
+//router.get("/", getCurrentUser);
+//router.get("/:userId", getUser); 
+//router.post("/", updateUsers);
 
 module.exports = router;
+
