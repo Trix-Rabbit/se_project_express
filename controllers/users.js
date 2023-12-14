@@ -4,11 +4,7 @@ const User = require("../models/user");
 const {
   handleErrors,
   ERROR_400_BAD_REQUEST,
-  ERROR_401_UNAUTHORIZED,
-  ERROR_403_FORBIDDEN,
-  ERROR_404_NOT_FOUND,
   ERROR_409_DUPLICATE,
-  ERROR_500_DEFAULT_ERROR,
 } = require("../utils/errors");
 
 const { JWT_SECRET } = require("../utils/config");

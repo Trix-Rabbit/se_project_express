@@ -1,4 +1,4 @@
-const ClothingItem = require("../models/clothingitem");
+const ClothingItem = require("../models/clothingItem");
 const {
   ERROR_400_BAD_REQUEST,
   ERROR_403_FORBIDDEN,
