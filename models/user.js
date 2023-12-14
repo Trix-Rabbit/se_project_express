@@ -42,12 +42,12 @@ user.statics.findUserByCredentials = function findUserByCredentials(
     .select("+password")
     .then((emailData) => {
       if (!emailData) {
-        return Promise.reject(new Error("Please check email or password. [emailData]"));
+        return Promise.reject(new Error("Incorrect email or password"));
       }
 
       return bcrypt.compare(password, emailData.password).then((matched) => {
         if (!matched) {
-          return Promise.reject(new Error("Please check email or password. [reject]"));
+          return Promise.reject(new Error("Incorrect email or password"));
         }
 
         return emailData;

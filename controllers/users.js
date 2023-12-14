@@ -4,6 +4,7 @@ const User = require("../models/user");
 const {
   handleErrors,
   ERROR_400_BAD_REQUEST,
+  ERROR_401_UNAUTHORIZED,
   ERROR_409_DUPLICATE,
 } = require("../utils/errors");
 
@@ -58,7 +59,7 @@ const userLogin = (req, res) => {
     })
     .catch((err) => {
       console.error(err);
-      res.status(ERROR_400_BAD_REQUEST).send({ message: "Incorrect email or password" });
+      res.status(ERROR_401_UNAUTHORIZED).send({ message: "Incorrect email or password" });
     });
 };
 
