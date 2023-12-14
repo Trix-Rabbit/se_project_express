@@ -50,17 +50,21 @@ const createUser = (req, res) => {
 const userLogin = (req, res) => {
   const { email, password } = req.body;
 
-  User.findUserByCredentials(email, password)
-    .then((user) => {
-      const token = jwt.sign({ _id: user._id }, JWT_SECRET, {
-        expiresIn: "7d",
+  if (email === undefined || password === undefined) {
+    res.status(ERROR_400_BAD_REQUEST).send({ message: "email and password are required"})
+  } else {
+    User.findUserByCredentials(email, password)
+      .then((user) => {
+        const token = jwt.sign({ _id: user._id }, JWT_SECRET, {
+          expiresIn: "7d",
+        });
+        res.status(200).send({ token });
+      })
+      .catch((err) => {
+        console.error(err);
+        res.status(ERROR_401_UNAUTHORIZED).send({ message: "Incorrect email or password" });
       });
-      res.status(200).send({ token });
-    })
-    .catch((err) => {
-      console.error(err);
-      res.status(ERROR_401_UNAUTHORIZED).send({ message: "Incorrect email or password" });
-    });
+  }
 };
 
 
